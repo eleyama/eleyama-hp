@@ -12,5 +12,5 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": { "astro": "7.3.6" },
-  "devDependencies": { "wrangler": "4.147.0" }
+  "devDependencies": { "wrangler": "4.152.0" }
 }
