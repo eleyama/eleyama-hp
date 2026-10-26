@@ -1,5 +1,51 @@
 ---
+import { get } from 'node:https';
 import '../styles/global.css';
+
+// noteの記事一覧。ビルド時にRSSから取得し、取得できなくてもビルドは止めない
+const NOTE_URL = 'https://note.com/eleyama';
+const NOTE_LIMIT = 5;
+
+const decode = (text) => text
+  .replace(/^<!\[CDATA\[([\s\S]*)\]\]>$/, '$1')
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+  .replace(/&#39;/g, "'").replace(/&amp;/g, '&')
+  .trim();
+
+const tag = (item, name) => decode(item.match(new RegExp(`<${name}>([\\s\\S]*?)</${name}>`))?.[1] ?? '');
+
+// fetch ではなく node:https を使う（Windows の Node 24 で fetch 後にビルドが異常終了するため）
+const download = (url) => new Promise((resolve, reject) => {
+  const req = get(url, { timeout: 10000 }, (res) => {
+    if (res.statusCode !== 200) {
+      res.resume();
+      reject(new Error(`HTTP ${res.statusCode}`));
+      return;
+    }
+    res.setEncoding('utf8');
+    let body = '';
+    res.on('data', (chunk) => { body += chunk; });
+    res.on('end', () => resolve(body));
+  });
+  req.on('timeout', () => req.destroy(new Error('timeout')));
+  req.on('error', reject);
+});
+
+async function loadNotes() {
+  try {
+    const xml = await download(`${NOTE_URL}/rss`);
+    return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)]
+      .map(([, item]) => ({ title: tag(item, 'title'), link: tag(item, 'link'), date: new Date(tag(item, 'pubDate')) }))
+      .filter((note) => note.title && note.link.startsWith(`${NOTE_URL}/n/`) && !Number.isNaN(note.date.getTime()))
+      .sort((a, b) => b.date - a.date)
+      .slice(0, NOTE_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+const notes = await loadNotes();
+const formatDate = (date) => date.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' });
 ---
 <!doctype html>
 <html lang="ja">
@@ -14,9 +60,9 @@ import '../styles/global.css';
 <body>
   <a class="skip" href="#main">本文へ移動</a>
   <header class="header">
-    <a class="brand" href="#">ELEYAMA<span class="brand-dot" aria-hidden="true">.</span></a>
+    <a class="brand" href="#">ELEYAMA</a>
     <nav aria-label="メインナビゲーション">
-      <a href="#works">サンプル</a><a href="#about">プロフィール</a>
+      <a href="#works">サンプル</a><a href="#notes">記事</a><a href="#about">プロフィール</a>
     </nav>
   </header>
   <main id="main">
@@ -32,22 +78,36 @@ import '../styles/global.css';
     </section>
 
     <section class="section works" id="works" aria-labelledby="works-title">
-      <div class="section-heading"><div><p class="eyebrow">01 / SAMPLES</p><h2 id="works-title">技術サンプル。</h2></div><p class="section-intro">動くサンプルと、その裏側の記録。</p></div>
+      <div class="section-heading"><div><p class="eyebrow">01 / SAMPLES</p><h2 id="works-title">技術サンプル</h2></div><p class="section-intro">動くサンプルと、その裏側の記録</p></div>
       <div class="preparing">
         <span class="status"><span aria-hidden="true"></span>準備中</span>
         <p>技術サンプルは、準備ができたものから掲載していきます。</p>
       </div>
     </section>
 
-    <section class="section about" id="about" aria-labelledby="about-title">
-      <div class="about-label"><p class="eyebrow">02 / ABOUT</p><h2 id="about-title">ELEYAMAについて。</h2><div class="cat-mark" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none"><path d="M22 42 19 17 40 31Q50 27 60 31L81 17 78 42Q92 80 50 83Q8 80 22 42Z"/><path d="M33 52h5m24 0h5M47 61l3 3 3-3m-3 3v6m0-2q-7 7-12 0m12 0q7 7 12 0M26 63l-18-3m19 10L9 73m65-10 18-3m-19 10 18 3"/></svg></div></div>
-      <div class="about-copy"><p class="about-lead">猫と暮らしながら、<br>日々、コードを書いています。</p><p>Java・JavaScript・SQLを中心に、<br>業務システムの開発・運営に約20年携わってきました。</p><p>個人ではさまざまな言語でプログラムを試しながら、<br>最近はAIを活用した効率的なコーディングを学んでいます。</p><div class="technology-list"><span>Java</span><span>JavaScript</span><span>SQL</span></div></div>
+    <section class="section notes" id="notes" aria-labelledby="notes-title">
+      <div class="section-heading"><div><p class="eyebrow">02 / NOTES</p><h2 id="notes-title">記事</h2></div><p class="section-intro">設計と検証の記録</p></div>
+      {notes.length > 0 ? (
+        <ul class="note-list">
+          {notes.map((note) => (
+            <li><a href={note.link}><time datetime={note.date.toISOString()}>{formatDate(note.date)}</time><span>{note.title}</span></a></li>
+          ))}
+        </ul>
+      ) : (
+        <p class="note-empty">記事は準備中です。</p>
+      )}
+      <a class="note-more" href={NOTE_URL}>noteですべて見る <span aria-hidden="true">→</span></a>
     </section>
-    <section class="contact">
+
+    <section class="section about" id="about" aria-labelledby="about-title">
+      <div class="about-label"><p class="eyebrow">03 / ABOUT</p><h2 id="about-title">ELEYAMAについて</h2><div class="cat-mark" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none"><path d="M22 42 19 17 40 31Q50 27 60 31L81 17 78 42Q92 80 50 83Q8 80 22 42Z"/><path d="M33 52h5m24 0h5M47 61l3 3 3-3m-3 3v6m0-2q-7 7-12 0m12 0q7 7 12 0M26 63l-18-3m19 10L9 73m65-10 18-3m-19 10 18 3"/></svg></div></div>
+      <div class="about-copy"><p class="about-lead">猫と暮らしながら、<br>AIとつくったり、考えたりしています。</p><p>長年、業務システムの要件の整理から設計・開発・テスト、導入・運用まで、一通りやってきました。</p></div>
+    </section>
+    <section class="contact" id="contact">
       <img class="contact-image" src="/images/night-coffee.png" alt="" width="1536" height="1024" loading="lazy">
-      <div class="contact-copy"><p class="eyebrow">CONTACT</p><p>ご連絡はこちらから。</p><span class="contact-email">contact<svg class="email-at" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="アットマーク"><circle cx="12" cy="12" r="4"/><path d="M16 8v6a3 3 0 0 0 6 0v-2a10 10 0 1 0-4 8"/></svg>eleyama.com</span><p class="contact-hint">中央の記号はアットマークです。アドレスを入力してご連絡ください。</p></div>
+      <div class="contact-copy"><p class="eyebrow">CONTACT</p><p>お仕事のご依頼はこちらから</p><p class="contact-guide">実現したいことや現在困っていること、ご希望の時期をお知らせください。<br>資料があれば、あわせてご共有ください。</p><span class="contact-email">contact<svg class="email-at" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="アットマーク"><circle cx="12" cy="12" r="4"/><path d="M16 8v6a3 3 0 0 0 6 0v-2a10 10 0 1 0-4 8"/></svg>eleyama.com</span><p class="contact-hint">中央の記号はアットマークです。アドレスを入力してご連絡ください。</p></div>
     </section>
   </main>
-  <footer><a class="brand" href="#">ELEYAMA<span class="brand-dot" aria-hidden="true">.</span></a><p>猫と暮らすプログラマー</p><small>© ELEYAMA</small></footer>
+  <footer><a class="brand" href="#">ELEYAMA</a><p>猫と暮らすプログラマー。</p><small>© ELEYAMA</small></footer>
 </body>
 </html>
