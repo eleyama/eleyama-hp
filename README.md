@@ -40,3 +40,4 @@ Workers & PagesでGitHubからWorkerを作成し、このリポジトリを選�
 GitHub Actionsは検証用です。Cloudflare Buildsが公開を担当し、ビルドコマンド内のテストに成功した場合のみデプロイします。APIキーやパスワードはリポジトリに保存しません。
 
 公開HTMLにrobotsのnoindexはありません。現時点ではコード準備のみで、外部公開は未実施です。
+
