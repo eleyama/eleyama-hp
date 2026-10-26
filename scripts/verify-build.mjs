@@ -17,5 +17,10 @@ assert(html.includes('class="email-at"'), 'Missing SVG at symbol');
 assert(html.includes('https://eleyama.com/'), 'Missing canonical URL');
 assert(html.includes('準備中'), 'Keep samples preparation state');
 assert(!html.includes('JOURNAL'), 'Removed journal must stay removed');
+assert(html.includes('href="https://note.com/eleyama"'), 'Missing note profile link');
+const noteList = html.match(/<ul class="note-list">([\s\S]*?)<\/ul>/)?.[1] ?? '';
+for (const [, href] of noteList.matchAll(/href="([^"]+)"/g)) {
+  assert(href.startsWith('https://note.com/eleyama/n/'), `Unexpected note link: ${href}`);
+}
 assert(readFileSync('dist/404.html', 'utf8').includes('noindex'));
-console.log('PASS: anchors, assets, metadata, SVG email, preparation state, 404');
+console.log('PASS: anchors, assets, metadata, SVG email, preparation state, notes, 404');
