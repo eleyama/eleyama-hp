@@ -11,6 +11,6 @@
     "test": "node scripts/verify-build.mjs",
     "deploy": "wrangler deploy"
   },
-  "dependencies": { "astro": "7.3.6" },
-  "devDependencies": { "wrangler": "4.147.0" }
+  "dependencies": { "astro": "7.3.8" },
+  "devDependencies": { "wrangler": "4.149.0" }
 }
