@@ -33,7 +33,8 @@ const download = (url) => new Promise((resolve, reject) => {
 
 async function loadNotes() {
   try {
-    const xml = await download(`${NOTE_URL}/rss`);
+    // クエリを付けないと、公開直後の記事が含まれない古いRSSが返ることがある
+    const xml = await download(`${NOTE_URL}/rss?t=${Date.now()}`);
     return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)]
       .map(([, item]) => ({ title: tag(item, 'title'), link: tag(item, 'link'), date: new Date(tag(item, 'pubDate')) }))
       .filter((note) => note.title && note.link.startsWith(`${NOTE_URL}/n/`) && !Number.isNaN(note.date.getTime()))
