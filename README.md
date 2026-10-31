@@ -1,17 +1,17 @@
 # ELEYAMA HP
 
-猫と暮らすプログラマーのHP。Astroで静的生成し、Cloudflare Workers Static Assetsで配信します。
+猫と暮らすプログラマーのHP。Astroで静的生成し、Cloudflare Workers Static Assetsで https://eleyama.com に配信します。
 
 ## ローカル確認
 
-Node.js 24 LTSを推奨。
+開発・CIではNode.js 24を使用します。package.jsonの要件は>=22.12.0です。
 
 ```powershell
 npm.cmd ci
 npm.cmd run dev
 ```
 
-表示されるlocalhostのURLをブラウザで開きます。モックはmock/index.htmlに保存しています。公開版はsrc/pages/index.astroです。
+表示されるURLをブラウザで開きます。公開用の編集元はsrc/pages/index.astro、スタイルはsrc/styles/global.css、画像はpublic/imagesです。
 
 ## 検証
 
@@ -21,23 +21,20 @@ npm.cmd test
 npm.cmd run preview
 ```
 
-紹介文はsrc/pages/index.astro、スタイルはsrc/styles/global.css、画像はpublic/imagesを編集します。サンプルは準備中です。
+テストはビルド済みのdistを対象に、アンカー、アセット、メタ情報、SVGメール表示、サンプル準備中、404を確認します。ブラウザE2Eや全端末の表示検証は含みません。
 
-## Cloudflareへの接続
+## 公開設定
 
-GitHubリポジトリ：https://github.com/eleyama/eleyama-hp
+GitHub：https://github.com/eleyama/eleyama-hp
 
-Workers & PagesでGitHubからWorkerを作成し、このリポジトリを選択します。
+Worker eleyama-hpにカスタムドメインeleyama.comを接続しています。Cloudflare Buildsの設定：
 
 - プロジェクトルート：リポジトリのルート
 - 本番ブランチ：main
 - ビルドコマンド：npm run build && npm test
 - デプロイコマンド：npx wrangler deploy
-- 静的配信対象：dist（wrangler.jsoncで指定済み）
+- 配信対象：dist（wrangler.jsoncで指定）
 
-提供URLで確認した後、Workerのカスタムドメインにeleyama.comを追加します。メール転送のMX・TXTレコードは削除しません。wwwの接続は別途設定します。
+GitHub Actionsは検証用です。Cloudflare Buildsが自身のビルド・テスト成功後に公開します。メール用MX・TXTレコードを維持してください。認証情報はリポジトリに保存しません。
 
-GitHub Actionsは検証用です。Cloudflare Buildsが公開を担当し、ビルドコマンド内のテストに成功した場合のみデプロイします。APIキーやパスワードはリポジトリに保存しません。
-
-公開HTMLにrobotsのnoindexはありません。現時点ではコード準備のみで、外部公開は未実施です。
-
+トップにnoindexはなく、404には設定済みです。技術サンプルは準備中で、一覧・詳細ページとMarkdown管理は未実装です。連絡先はSVGのアットマークを使って表示し、mailtoリンクは設けていません。

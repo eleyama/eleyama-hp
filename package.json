@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.12.0" },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "astro dev --host 127.0.0.1",
     "build": "astro build",
@@ -11,6 +13,14 @@
     "test": "node scripts/verify-build.mjs",
     "deploy": "wrangler deploy"
   },
-  "dependencies": { "astro": "7.3.8" },
-  "devDependencies": { "wrangler": "4.149.0" }
+  "dependencies": {
+    "astro": "7.3.8"
+  },
+  "devDependencies": {
+    "wrangler": "4.156.0"
+  },
+  "allowScripts": {
+    "esbuild": false,
+    "workerd": false
+  }
 }

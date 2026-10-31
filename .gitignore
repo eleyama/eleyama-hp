@@ -10,13 +10,6 @@ dist/
 *.pem
 *.key
 *.log
-release/
-
-# 手元用のメモ・試作・設計書（公開しない）
-notes/
-mock/
-SYSTEM_DESIGN.md
-WEBSITE_DESIGN.md
 
 # フォルダ直下の元画像（公開用は public/images/ に置く）
 /*.png
